@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { type Link, type Outfit, type Prenda } from "./types";
+import { type Category, type Link, type Outfit, type Prenda } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -61,6 +61,7 @@ export type PrismaOutfitRecord = {
 export function normalizePrenda(record: PrismaPrendaRecord): Prenda {
   return {
     ...record,
+    category: record.category as Category,
     secondaryColors: parseStringArray(record.secondaryColors),
     styleTags: parseStringArray(record.styleTags),
     fit: (record.fit as Prenda["fit"]) ?? null,

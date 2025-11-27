@@ -1,10 +1,9 @@
 import { z } from "zod";
-import { type Category, type Fit, type Pattern, type Strength } from "./types";
 
-const categoryValues: Category[] = ["top", "bottom", "shoes", "outerwear", "accessory"];
-const fitValues: Exclude<Fit, null>[] = ["slim", "regular", "oversized", "wide"];
-const patternValues: Pattern[] = ["solid", "striped", "checkered", "graphic", "other"];
-const strengthValues: Strength[] = ["strong", "ok", "weak"];
+const categoryValues = ["top", "bottom", "shoes", "outerwear", "accessory"] as const;
+const fitValues = ["slim", "regular", "oversized", "wide"] as const;
+const patternValues = ["solid", "striped", "checkered", "graphic", "other"] as const;
+const strengthValues = ["strong", "ok", "weak"] as const;
 
 const stringArray = z
   .array(z.string().trim().min(1))

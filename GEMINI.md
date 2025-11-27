@@ -1,4 +1,4 @@
-# MeshFit – CODEX.md  
+# MeshFit – GEMINI.md  
 Guía maestra del proyecto  
 Versión 1.0
 
@@ -84,7 +84,7 @@ meshfit/
  ├─ prisma/
  │   └─ schema.prisma
  ├─ public/
- ├─ CODEX.md
+ ├─ GEMINI.md
  ├─ README.md
  ├─ package.json
  └─ tsconfig.json
@@ -305,9 +305,9 @@ No usar Material UI, Chakra, Bootstrap ni librerías externas que entren en conf
 
 ---
 
-# 8. Reglas para Codex / Asistentes de Código
+# 8. Reglas para Gemini / Asistentes de Código
 
-Codex debe:
+Gemini debe:
 
 1. **Leer este archivo antes de generar código.**
 2. Escribir todo en **TypeScript**.
