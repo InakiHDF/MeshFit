@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Prenda {
+  id              String   @id @default(cuid())
+  name            String
+  category        String
+  mainColor       String
+  secondaryColors String   @default("[]") // JSON string array
+  formality       Int
+  styleTags       String   @default("[]") // JSON string array
+  fit             String?
+  warmth          Int
+  pattern         String
+  fabric          String
+  seasonTags      String   @default("[]") // JSON string array
+  notes           String?
+  imageUrl        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  linksAsSource   Link[]   @relation("LinkFrom")
+  linksAsTarget   Link[]   @relation("LinkTo")
+}
+
+model Link {
+  id          String   @id @default(cuid())
+  prendaAId   String
+  prendaBId   String
+  strength    String
+  contextTags String   @default("[]") // JSON string array
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  prendaA Prenda @relation("LinkFrom", fields: [prendaAId], references: [id])
+  prendaB Prenda @relation("LinkTo", fields: [prendaBId], references: [id])
+
+  @@unique([prendaAId, prendaBId])
+}
+
+model Outfit {
+  id          String   @id @default(cuid())
+  prendasIds  String   @default("[]") // JSON string array
+  occasion    String
+  description String
+  aiModel     String?
+  createdAt   DateTime @default(now())
+}
