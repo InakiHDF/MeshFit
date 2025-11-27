@@ -414,7 +414,7 @@ function GraphView() {
   const { data: links } = useQuery<LinkType[]>({ queryKey: ["links"], queryFn: () => api("/api/graph") });
 
   const nodes = useMemo(() => prendas?.map(p => ({ id: p.id, name: p.name, category: p.category, formality: p.formality })) || [], [prendas]);
-  const edges = useMemo(() => links?.map(l => ({ id: l.id, source: l.prendaAId, target: l.prendaBId })) || [], [links]);
+  const edges = useMemo(() => links?.map(l => ({ id: l.id, source: l.prendaAId, target: l.prendaBId, strength: l.strength })) || [], [links]);
 
   return (
     <div className="p-8 h-full flex flex-col">
