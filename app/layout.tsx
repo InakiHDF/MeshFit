@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const geistSans = Geist({
+const geistSans = GeistSans({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = GeistMono({
   variable: "--font-mono",
   subsets: ["latin"],
 });
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MeshFit — Grafo de outfit",
   description:
-    "Prototype de MeshFit: gestionar tu guardarropa como un grafo y generar outfits válidos.",
+    "Prototype de MeshFit: gestionar tu guardarropa como un grafo y generar outfits validos.",
 };
 
 export default function RootLayout({
