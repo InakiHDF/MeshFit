@@ -297,12 +297,12 @@ function PrendaWizard({ onClose }: { onClose: () => void }) {
         const parsed = JSON.parse(err.message);
         if (parsed.fieldErrors) {
            Object.entries(parsed.fieldErrors).forEach(([field, messages]) => {
-             toast({ title: `Error en ${field}`, description: String(messages), variant: "destructive" });
+             toast({ title: `Error en ${field}`, description: String(messages) });
            });
            return;
         }
       } catch (e) {}
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err.message });
     }
   });
 
