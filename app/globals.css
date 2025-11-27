@@ -22,6 +22,8 @@
   --border: 240 8% 20%;
   --input: 240 8% 20%;
   --ring: 215 89% 65%;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 * {
