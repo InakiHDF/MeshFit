@@ -34,11 +34,19 @@ export const prendaSchema = z.object({
     .transform((val) => (val && val.length ? val : null)),
   imageUrl: z
     .string()
-    .trim()
-    .url()
     .optional()
+    .nullable()
     .or(z.literal(""))
-    .transform((val) => (val && val.length ? val : null)),
+    .transform((val) => {
+      if (!val) return null;
+      if (val.trim() === "") return null;
+      try {
+        z.string().url().parse(val);
+        return val;
+      } catch {
+        return null; // If it's not a valid URL, just ignore it for now to avoid blocking
+      }
+    }),
 });
 
 export const linkSchema = z
