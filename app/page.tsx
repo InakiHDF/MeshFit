@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Flame, Link as LinkIcon, MousePointer2, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { Flame, Link as LinkIcon, MousePointer2, RefreshCw, Sparkles, Trash2, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import { toast } from "@/components/ui/use-toast";
 import { type GraphLink, type GraphNode } from "@/components/graph-canvas";
 import { type Category, type Fit, type Link as LinkType, type Outfit, type Pattern, type Prenda, type Strength } from "@/lib/types";
 import { generateOutfitsSchema, linkSchema, prendaSchema, saveOutfitSchema } from "@/lib/validators";
+import { createClient } from "@/lib/supabase/client";
 
 const GraphCanvas = dynamic(
   () => import("@/components/graph-canvas").then((mod) => mod.GraphCanvas),
@@ -116,6 +118,14 @@ export default function Home() {
   const [selectedLinkNodes, setSelectedLinkNodes] = useState<string[]>([]);
   const [generated, setGenerated] = useState<GeneratedOutfit[]>([]);
   const [requiredPrendas, setRequiredPrendas] = useState<Set<string>>(new Set());
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   const wardrobeQuery = useQuery<Prenda[]>({
     queryKey: ["wardrobe"],
@@ -315,14 +325,19 @@ export default function Home() {
     <main className="min-h-screen bg-background px-4 py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
         <header className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-gradient-to-r from-[#0c111d] via-[#0c111d] to-[#0d1b2a] p-6 shadow-xl">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Sparkles className="h-6 w-6" />
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">MeshFit / MVP</p>
+                <h1 className="text-3xl font-semibold text-foreground">Grafo de compatibilidades + outfits</h1>
+              </div>
             </div>
-            <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">MeshFit / MVP</p>
-              <h1 className="text-3xl font-semibold text-foreground">Grafo de compatibilidades + outfits</h1>
-            </div>
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Cerrar sesión">
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
           <p className="max-w-3xl text-sm text-muted-foreground">
             CRUD de prendas, editor de links y generador local respetando la regla de clique completa.

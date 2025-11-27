@@ -4,6 +4,7 @@ import { normalizeLink, normalizeOutfit, stringifyArray } from "@/lib/utils";
 import { saveOutfitSchema } from "@/lib/validators";
 import { isClique } from "@/lib/outfitRules";
 import { ZodError } from "zod";
+import { createClient } from "@/lib/supabase/server";
 
 function buildGraph(links: ReturnType<typeof normalizeLink>[]) {
   const graph = new Map<string, Set<string>>();
@@ -20,27 +21,42 @@ function buildGraph(links: ReturnType<typeof normalizeLink>[]) {
 }
 
 export async function GET() {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const outfits = await prisma.outfit.findMany({
+    where: { userId: user.id },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(outfits.map(normalizeOutfit));
 }
 
 export async function POST(request: Request) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const json = await request.json();
     const data = saveOutfitSchema.parse(json);
     const prendas = await prisma.prenda.findMany({
-      where: { id: { in: data.prendasIds } },
+      where: { id: { in: data.prendasIds }, userId: user.id },
     });
     if (prendas.length !== data.prendasIds.length) {
       return NextResponse.json(
-        { error: "Alguna prenda no existe en la base." },
+        { error: "Alguna prenda no existe en la base o no te pertenece." },
         { status: 400 },
       );
     }
 
-    const links = (await prisma.link.findMany()).map(normalizeLink);
+    const links = (await prisma.link.findMany({ where: { userId: user.id } })).map(normalizeLink);
     const graph = buildGraph(links);
 
     if (!isClique(data.prendasIds, graph)) {
@@ -52,6 +68,7 @@ export async function POST(request: Request) {
 
     const outfit = await prisma.outfit.create({
       data: {
+        userId: user.id,
         prendasIds: stringifyArray(data.prendasIds),
         occasion: data.occasion,
         description: data.description,

@@ -3,12 +3,14 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Prenda {
   id              String   @id @default(cuid())
+  userId          String
   name            String
   category        String
   mainColor       String
@@ -30,6 +32,7 @@ model Prenda {
 
 model Link {
   id          String   @id @default(cuid())
+  userId      String
   prendaAId   String
   prendaBId   String
   strength    String
@@ -45,6 +48,7 @@ model Link {
 
 model Outfit {
   id          String   @id @default(cuid())
+  userId      String
   prendasIds  String   @default("[]") // JSON string array
   occasion    String
   description String
