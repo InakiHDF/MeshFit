@@ -76,7 +76,7 @@ export function ColorSelector({ value, onChange }: ColorSelectorProps) {
           {value ? (
             <div className="flex items-center gap-2">
               <div
-                className={cn("h-4 w-4 rounded-full", selectedColorObj?.border && "border border-slate-200")}
+                className={cn("h-4 w-4 rounded-full", (selectedColorObj as any)?.border && "border border-slate-200")}
                 style={{ backgroundColor: selectedColorObj?.hex || "#ccc" }}
               />
               <span>{value}</span>
@@ -135,7 +135,7 @@ export function ColorSelector({ value, onChange }: ColorSelectorProps) {
                   }}
                 >
                   <div
-                    className={cn("h-4 w-4 rounded-full", color.border && "border border-slate-200")}
+                    className={cn("h-4 w-4 rounded-full", (color as any).border && "border border-slate-200")}
                     style={{ backgroundColor: color.hex }}
                   />
                   {color.name}
