@@ -44,11 +44,15 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(normalizePrenda(prenda), { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof ZodError) {
       return NextResponse.json({ error: error.flatten() }, { status: 400 });
     }
-    console.error(error);
-    return NextResponse.json({ error: "No se pudo crear la prenda" }, { status: 500 });
+    console.error("Error creando prenda:", error);
+    // Return actual error message for debugging
+    return NextResponse.json(
+      { error: error.message || "Error desconocido en el servidor", details: error }, 
+      { status: 500 }
+    );
   }
 }
