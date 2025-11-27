@@ -100,7 +100,10 @@ async function api<T>(url: string, options?: RequestInit) {
   });
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
-    const message = (errorBody as any)?.error ?? "Error inesperado";
+    // If the error is an object (like Zod flatten), stringify it to pass it to the Error message
+    const message = typeof (errorBody as any)?.error === 'object' 
+      ? JSON.stringify((errorBody as any).error) 
+      : (errorBody as any)?.error ?? res.statusText;
     throw new Error(message);
   }
   return res.json() as Promise<T>;
@@ -190,7 +193,22 @@ export default function Home() {
       toast({ title: "Prenda creada" });
       prendaForm.reset();
     },
-    onError: (err: Error) => toast({ title: "Error al crear", description: err.message }),
+    onError: (err: any) => {
+      // Try to parse Zod errors if they are returned in the error message or object
+      try {
+        // Assuming the fetch wrapper throws an Error with the message being the stringified JSON
+        const parsed = JSON.parse(err.message);
+        if (parsed.fieldErrors) {
+           Object.entries(parsed.fieldErrors).forEach(([field, messages]) => {
+             toast({ title: `Error en ${field}`, description: String(messages) });
+           });
+           return;
+        }
+      } catch (e) {
+        // Not a JSON error
+      }
+      toast({ title: "Error al crear", description: err.message })
+    },
   });
 
   const updatePrenda = useMutation({
