@@ -45,7 +45,7 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error.message });
     } finally {
       setLoading(false);
     }
