@@ -67,6 +67,7 @@ async function seed() {
     data: [
       {
         id: "top-basic-tee",
+        userId: "seed-user",
         name: "Remera blanca premium",
         category: "top",
         mainColor: "blanco",
@@ -83,6 +84,7 @@ async function seed() {
       },
       {
         id: "bottom-jeans",
+        userId: "seed-user",
         name: "Jeans negros slim",
         category: "bottom",
         mainColor: "negro",
@@ -99,6 +101,7 @@ async function seed() {
       },
       {
         id: "shoes-sneakers",
+        userId: "seed-user",
         name: "Zapatillas blancas minimal",
         category: "shoes",
         mainColor: "blanco",
@@ -115,6 +118,7 @@ async function seed() {
       },
       {
         id: "outer-navy-blazer",
+        userId: "seed-user",
         name: "Blazer azul marino",
         category: "outerwear",
         mainColor: "azul marino",
@@ -131,6 +135,7 @@ async function seed() {
       },
       {
         id: "acc-leather-belt",
+        userId: "seed-user",
         name: "Cinturón cuero marrón",
         category: "accessory",
         mainColor: "marrón",
@@ -147,6 +152,7 @@ async function seed() {
       },
       {
         id: "bottom-chinos",
+        userId: "seed-user",
         name: "Chino beige",
         category: "bottom",
         mainColor: "beige",
@@ -163,6 +169,7 @@ async function seed() {
       },
       {
         id: "top-hoodie",
+        userId: "seed-user",
         name: "Buzo gris melange",
         category: "top",
         mainColor: "gris",
@@ -179,6 +186,7 @@ async function seed() {
       },
       {
         id: "shoes-boots",
+        userId: "seed-user",
         name: "Botas Chelsea cuero",
         category: "shoes",
         mainColor: "marrón",
@@ -202,6 +210,7 @@ async function seed() {
     data: [
       {
         id: "link-tee-jeans",
+        userId: "seed-user",
         prendaAId: "bottom-jeans",
         prendaBId: "top-basic-tee",
         strength: "strong",
@@ -210,6 +219,7 @@ async function seed() {
       },
       {
         id: "link-tee-sneakers",
+        userId: "seed-user",
         prendaAId: "shoes-sneakers",
         prendaBId: "top-basic-tee",
         strength: "strong",
@@ -218,6 +228,7 @@ async function seed() {
       },
       {
         id: "link-jeans-sneakers",
+        userId: "seed-user",
         prendaAId: "bottom-jeans",
         prendaBId: "shoes-sneakers",
         strength: "ok",
@@ -226,6 +237,7 @@ async function seed() {
       },
       {
         id: "link-tee-chino",
+        userId: "seed-user",
         prendaAId: "bottom-chinos",
         prendaBId: "top-basic-tee",
         strength: "strong",
@@ -234,6 +246,7 @@ async function seed() {
       },
       {
         id: "link-chino-chelsea",
+        userId: "seed-user",
         prendaAId: "bottom-chinos",
         prendaBId: "shoes-boots",
         strength: "strong",
@@ -242,6 +255,7 @@ async function seed() {
       },
       {
         id: "link-tee-belt",
+        userId: "seed-user",
         prendaAId: "top-basic-tee",
         prendaBId: "acc-leather-belt",
         strength: "ok",
@@ -250,6 +264,7 @@ async function seed() {
       },
       {
         id: "link-chino-belt",
+        userId: "seed-user",
         prendaAId: "bottom-chinos",
         prendaBId: "acc-leather-belt",
         strength: "ok",
@@ -258,6 +273,7 @@ async function seed() {
       },
       {
         id: "link-blazer-tee",
+        userId: "seed-user",
         prendaAId: "outer-navy-blazer",
         prendaBId: "top-basic-tee",
         strength: "ok",
@@ -266,6 +282,7 @@ async function seed() {
       },
       {
         id: "link-blazer-chino",
+        userId: "seed-user",
         prendaAId: "outer-navy-blazer",
         prendaBId: "bottom-chinos",
         strength: "strong",
@@ -274,6 +291,7 @@ async function seed() {
       },
       {
         id: "link-blazer-boots",
+        userId: "seed-user",
         prendaAId: "outer-navy-blazer",
         prendaBId: "shoes-boots",
         strength: "ok",
@@ -282,6 +300,7 @@ async function seed() {
       },
       {
         id: "link-hoodie-jeans",
+        userId: "seed-user",
         prendaAId: "top-hoodie",
         prendaBId: "bottom-jeans",
         strength: "strong",
@@ -290,6 +309,7 @@ async function seed() {
       },
       {
         id: "link-hoodie-sneakers",
+        userId: "seed-user",
         prendaAId: "top-hoodie",
         prendaBId: "shoes-sneakers",
         strength: "strong",
