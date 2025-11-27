@@ -394,14 +394,16 @@ export default function Home() {
                       <div className="space-y-1.5">
                         <Label>Fit</Label>
                         <Select
-                          value={prendaForm.watch("fit") || ""}
-                          onValueChange={(value) => prendaForm.setValue("fit", value as Fit)}
+                          value={prendaForm.watch("fit") || "no-selection"}
+                          onValueChange={(value) =>
+                            prendaForm.setValue("fit", value === "no-selection" ? "" : (value as Fit))
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">N/A</SelectItem>
+                            <SelectItem value="no-selection">N/A</SelectItem>
                             {fits.map((f) => (
                               <SelectItem key={f.value} value={f.value}>
                                 {f.label}
