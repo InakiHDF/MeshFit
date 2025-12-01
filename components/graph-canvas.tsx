@@ -85,12 +85,17 @@ export function GraphCanvas({ nodes, links, selectedIds = [], onNodeSelect }: Pr
           ctx.fillText(label, (node.x ?? 0) + 12, node.y ?? 0);
         }}
         onNodeClick={(node) => onNodeSelect?.((node as GraphNode).id)}
+        enableNodeDrag={false}
+        onNodeHover={(node) => {
+          if (typeof document !== "undefined") {
+            document.body.style.cursor = node ? "pointer" : "default";
+          }
+        }}
         nodePointerAreaPaint={(node: NodeObject, color: string, ctx) => {
-          const typed = node as GraphNode;
-          const radius = selectedIds.includes(typed.id) ? 10 : 8;
           ctx.fillStyle = color;
           ctx.beginPath();
-          ctx.arc(node.x ?? 0, node.y ?? 0, radius + 4, 0, 2 * Math.PI, false); // +4 padding for easier clicking
+          // Fixed larger radius for easier clicking, ignoring visual size
+          ctx.arc(node.x ?? 0, node.y ?? 0, 20, 0, 2 * Math.PI, false);
           ctx.fill();
         }}
         linkColor={(link: LinkObject) =>
