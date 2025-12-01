@@ -410,19 +410,90 @@ function PrendaWizard({ onClose }: { onClose: () => void }) {
 }
 
 function GraphView() {
+  const qc = useQueryClient();
   const { data: prendas } = useQuery<Prenda[]>({ queryKey: ["wardrobe"], queryFn: () => api("/api/wardrobe") });
   const { data: links } = useQuery<LinkType[]>({ queryKey: ["links"], queryFn: () => api("/api/graph") });
+  
+  const [sourceId, setSourceId] = useState<string | null>(null);
 
   const nodes = useMemo(() => prendas?.map(p => ({ id: p.id, name: p.name, category: p.category, formality: p.formality })) || [], [prendas]);
   const edges = useMemo(() => links?.map(l => ({ id: l.id, source: l.prendaAId, target: l.prendaBId, strength: l.strength })) || [], [links]);
+
+  const createLink = useMutation({
+    mutationFn: async ({ a, b }: { a: string; b: string }) => {
+      return api("/api/graph", {
+        method: "POST",
+        body: JSON.stringify({
+          prendaAId: a,
+          prendaBId: b,
+          strength: "ok", // Default strength
+        }),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["links"] });
+      toast({ title: "Link creado", description: "Las prendas ahora están conectadas." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo crear el link." });
+    },
+  });
+
+  const deleteLink = useMutation({
+    mutationFn: async ({ a, b }: { a: string; b: string }) => {
+      return api("/api/graph", {
+        method: "DELETE",
+        body: JSON.stringify({ prendaAId: a, prendaBId: b }),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["links"] });
+      toast({ title: "Link eliminado", description: "La conexión ha sido removida." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo borrar el link." });
+    },
+  });
+
+  const handleNodeClick = (id: string) => {
+    if (!sourceId) {
+      setSourceId(id);
+      return;
+    }
+
+    if (sourceId === id) {
+      setSourceId(null); // Deselect
+      return;
+    }
+
+    // Check if link already exists
+    const exists = links?.some(
+      (l) => (l.prendaAId === sourceId && l.prendaBId === id) || (l.prendaAId === id && l.prendaBId === sourceId)
+    );
+
+    if (exists) {
+      deleteLink.mutate({ a: sourceId, b: id });
+    } else {
+      createLink.mutate({ a: sourceId, b: id });
+    }
+    setSourceId(null);
+  };
 
   return (
     <div className="p-8 h-full flex flex-col">
       <h2 className="text-3xl font-bold text-slate-900 mb-6">Grafo de Estilo</h2>
       <div className="flex-1 border border-slate-200 rounded-2xl bg-white shadow-sm overflow-hidden relative">
-        <GraphCanvas nodes={nodes} links={edges} onNodeSelect={() => {}} selectedIds={[]} />
-        <div className="absolute top-4 right-4 bg-white/90 p-4 rounded-xl border backdrop-blur-sm text-sm text-slate-500 max-w-xs">
-          <p>Conecta nodos para crear outfits compatibles. (WIP: Interacción mejorada pronto)</p>
+        <GraphCanvas 
+          nodes={nodes} 
+          links={edges} 
+          onNodeSelect={handleNodeClick} 
+          selectedIds={sourceId ? [sourceId] : []} 
+        />
+        <div className="absolute top-4 right-4 bg-white/90 p-4 rounded-xl border backdrop-blur-sm text-sm text-slate-600 max-w-xs shadow-sm">
+          <p className="font-semibold mb-1">Modo Edición:</p>
+          <p>1. Click en una prenda (origen).</p>
+          <p>2. Click en otra prenda (destino).</p>
+          <p className="mt-2 text-xs text-slate-400">Esto creará o borrará la conexión automáticamente.</p>
         </div>
       </div>
     </div>
