@@ -124,20 +124,24 @@ export function GraphCanvas({ nodes, links, selectedIds = [], onNodeSelect }: Pr
     [selectedIds],
   );
 
-  // 4. Hit Area (Simplified and generous)
-  const paintNodePointerArea = useCallback((node: NodeObject, color: string, ctx: CanvasRenderingContext2D) => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    // 20px hit radius ensures easy clicking even on small screens
-    ctx.arc(node.x ?? 0, node.y ?? 0, 20, 0, 2 * Math.PI, false);
-    ctx.fill();
-  }, []);
+  // 4. Hit Area (Default is usually fine, removing custom to minimize error surface)
+  // Reverting to default interaction settings to debug "only one node works" issue.
+  
+  const [lastClicked, setLastClicked] = useState<string>("None");
 
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full min-h-[500px] bg-[#09090b] relative overflow-hidden cursor-crosshair"
+      className="w-full h-full min-h-[500px] bg-[#09090b] relative overflow-hidden"
     >
+      {/* Debug Overlay */}
+      <div className="absolute top-2 left-2 z-50 pointer-events-none bg-black/80 text-white text-xs p-2 rounded">
+        <p>Debug Info:</p>
+        <p>Canvas: {Math.round(dimensions.width)}x{Math.round(dimensions.height)}</p>
+        <p>Last Click: {lastClicked}</p>
+        <p>Nodes: {nodes.length}</p>
+      </div>
+
       {dimensions.width > 0 && (
         <ForceGraph2D
           ref={graphRef}
@@ -146,12 +150,16 @@ export function GraphCanvas({ nodes, links, selectedIds = [], onNodeSelect }: Pr
           graphData={{ nodes, links }}
           
           // Interaction
-          onNodeClick={handleNodeClick}
-          enableNodeDrag={false} // Disable drag to prioritize click accuracy
+          onNodeClick={(node) => {
+             setLastClicked(node.id as string);
+             handleNodeClick(node);
+          }}
+          // Re-enabling drag to see if it helps with event capture
+          enableNodeDrag={true}
           
           // Rendering
           nodeCanvasObject={paintNode}
-          nodePointerAreaPaint={paintNodePointerArea}
+          // nodePointerAreaPaint removed to use default hit detection
           
           // Links
           linkColor={(link) => strengthColor[(link as GraphLink).strength] ?? "#52525b"}
