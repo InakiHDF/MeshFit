@@ -85,6 +85,14 @@ export function GraphCanvas({ nodes, links, selectedIds = [], onNodeSelect }: Pr
           ctx.fillText(label, (node.x ?? 0) + 12, node.y ?? 0);
         }}
         onNodeClick={(node) => onNodeSelect?.((node as GraphNode).id)}
+        nodePointerAreaPaint={(node: NodeObject, color: string, ctx) => {
+          const typed = node as GraphNode;
+          const radius = selectedIds.includes(typed.id) ? 10 : 8;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(node.x ?? 0, node.y ?? 0, radius + 4, 0, 2 * Math.PI, false); // +4 padding for easier clicking
+          ctx.fill();
+        }}
         linkColor={(link: LinkObject) =>
           strengthColor[(link as GraphLink).strength] ?? "#475569"
         }

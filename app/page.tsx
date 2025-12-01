@@ -12,7 +12,8 @@ import {
   LogOut, 
   Plus, 
   Search,
-  Trash2
+  Trash2,
+  Menu
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -25,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import { type Prenda, type Category, type Fit, type Pattern, type Link as LinkType, type Outfit } from "@/lib/types";
 import { prendaSchema } from "@/lib/validators";
@@ -68,6 +70,30 @@ export default function DashboardPage() {
     router.refresh();
   };
 
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-6 border-b border-slate-100">
+        <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-slate-900">
+          <div className="h-8 w-8 bg-black text-white rounded-lg flex items-center justify-center shadow-sm">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          MeshFit
+        </div>
+      </div>
+      <nav className="flex-1 p-4 space-y-1">
+        <NavButton active={view === "dashboard"} onClick={() => setView("dashboard")} icon={LayoutDashboard}>Dashboard</NavButton>
+        <NavButton active={view === "wardrobe"} onClick={() => setView("wardrobe")} icon={Shirt}>Guardarropa</NavButton>
+        <NavButton active={view === "graph"} onClick={() => setView("graph")} icon={Network}>Grafo</NavButton>
+        <NavButton active={view === "outfits"} onClick={() => setView("outfits")} icon={Sparkles}>Outfits</NavButton>
+      </nav>
+      <div className="p-4 border-t border-slate-100">
+        <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" /> Cerrar Sesión
+        </Button>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (view) {
       case "dashboard":
@@ -84,28 +110,30 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50/50 font-sans text-slate-900">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-slate-900">
-            <div className="h-8 w-8 bg-black text-white rounded-lg flex items-center justify-center shadow-sm">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            MeshFit
+    <div className="flex h-screen bg-slate-50/50 font-sans text-slate-900 flex-col md:flex-row">
+      {/* Mobile Header */}
+      <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 font-bold text-lg text-slate-900">
+          <div className="h-6 w-6 bg-black text-white rounded flex items-center justify-center">
+            <Sparkles className="h-3 w-3" />
           </div>
+          MeshFit
         </div>
-        <nav className="flex-1 p-4 space-y-1">
-          <NavButton active={view === "dashboard"} onClick={() => setView("dashboard")} icon={LayoutDashboard}>Dashboard</NavButton>
-          <NavButton active={view === "wardrobe"} onClick={() => setView("wardrobe")} icon={Shirt}>Guardarropa</NavButton>
-          <NavButton active={view === "graph"} onClick={() => setView("graph")} icon={Network}>Grafo</NavButton>
-          <NavButton active={view === "outfits"} onClick={() => setView("outfits")} icon={Sparkles}>Outfits</NavButton>
-        </nav>
-        <div className="p-4 border-t border-slate-100">
-          <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" /> Cerrar Sesión
-          </Button>
-        </div>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-64 bg-white">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      </header>
+
+      {/* Desktop Sidebar */}
+      <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
+        <SidebarContent />
       </aside>
 
       {/* Main Content */}
