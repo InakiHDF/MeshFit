@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import ForceGraph2D, {
   type LinkObject,
   type NodeObject,
+  type ForceGraphMethods,
 } from "react-force-graph-2d";
 
 import type { Strength } from "@/lib/types";
@@ -13,12 +14,14 @@ export type GraphNode = {
   name: string;
   category: string;
   formality: number;
+  x?: number;
+  y?: number;
 };
 
 export type GraphLink = {
   id: string;
-  source: string;
-  target: string;
+  source: string | GraphNode;
+  target: string | GraphNode;
   strength: Strength;
 };
 
@@ -45,100 +48,125 @@ type Props = {
 
 export function GraphCanvas({ nodes, links, selectedIds = [], onNodeSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const graphRef = useRef<ForceGraphMethods>();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [isMounted, setIsMounted] = useState(false);
 
+  // 1. Robust Resize Observer
   useEffect(() => {
-    setIsMounted(true);
-    
     if (!containerRef.current) return;
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
+    const updateSize = () => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
         setDimensions({ width, height });
       }
-    });
+    };
 
-    resizeObserver.observe(containerRef.current);
+    // Initial size
+    updateSize();
 
-    return () => resizeObserver.disconnect();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
   }, []);
 
-  const data = useMemo(
-    () => ({
-      nodes,
-      links: links.map((l) => ({
-        ...l,
-        source: l.source,
-        target: l.target,
-      })),
-    }),
-    [nodes, links],
+  // 2. Stable Click Handler
+  const handleNodeClick = useCallback(
+    (node: NodeObject) => {
+      if (onNodeSelect && node.id) {
+        onNodeSelect(node.id as string);
+      }
+    },
+    [onNodeSelect],
   );
 
+  // 3. Node Painting
+  const paintNode = useCallback(
+    (node: NodeObject, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      const typed = node as GraphNode;
+      const label = typed.name;
+      const color = categoryColor[typed.category] ?? "#94a3b8";
+      const isSelected = selectedIds.includes(typed.id);
+      const baseRadius = 8;
+      const radius = isSelected ? 12 : baseRadius;
+
+      // Draw Circle
+      ctx.beginPath();
+      ctx.arc(node.x ?? 0, node.y ?? 0, radius, 0, 2 * Math.PI, false);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Selection Ring
+      if (isSelected) {
+        ctx.lineWidth = 2 / globalScale; // Keep stroke thin regardless of zoom
+        ctx.strokeStyle = "#38bdf8"; // Cyan
+        ctx.stroke();
+        
+        // Glow effect
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#38bdf8";
+      } else {
+        ctx.shadowBlur = 0;
+      }
+
+      // Text Label
+      const fontSize = 12 / globalScale;
+      ctx.font = `500 ${fontSize}px Inter, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.7)";
+      ctx.fillText(label, node.x ?? 0, (node.y ?? 0) + radius + 2);
+      
+      // Reset shadow for other elements
+      ctx.shadowBlur = 0;
+    },
+    [selectedIds],
+  );
+
+  // 4. Hit Area (Simplified and generous)
+  const paintNodePointerArea = useCallback((node: NodeObject, color: string, ctx: CanvasRenderingContext2D) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    // 20px hit radius ensures easy clicking even on small screens
+    ctx.arc(node.x ?? 0, node.y ?? 0, 20, 0, 2 * Math.PI, false);
+    ctx.fill();
+  }, []);
+
   return (
-    <div ref={containerRef} className="h-full w-full min-h-[400px] bg-[#0f1118] relative overflow-hidden">
-      {isMounted && dimensions.width > 0 && (
+    <div 
+      ref={containerRef} 
+      className="w-full h-full min-h-[500px] bg-[#09090b] relative overflow-hidden cursor-crosshair"
+    >
+      {dimensions.width > 0 && (
         <ForceGraph2D
+          ref={graphRef}
           width={dimensions.width}
           height={dimensions.height}
-          graphData={data}
-          nodeLabel={(node) => (node as GraphNode).name}
-          nodeCanvasObject={(node: NodeObject, ctx, globalScale) => {
-            const typed = node as GraphNode;
-            const label = typed.name;
-            const color = categoryColor[typed.category] ?? "#94a3b8";
-            const isSelected = selectedIds.includes(typed.id);
-            const radius = isSelected ? 12 : 8;
-
-            ctx.beginPath();
-            ctx.arc(node.x ?? 0, node.y ?? 0, radius, 0, 2 * Math.PI, false);
-            ctx.fillStyle = color;
-            ctx.fill();
-            
-            if (isSelected) {
-              ctx.strokeStyle = "#38bdf8";
-              ctx.lineWidth = 3;
-              ctx.stroke();
-            }
-
-            const fontSize = 12 / globalScale;
-            ctx.font = `${fontSize}px Inter, system-ui`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = "#e2e8f0";
-            ctx.fillText(label, (node.x ?? 0), (node.y ?? 0) + radius + 8);
+          graphData={{ nodes, links }}
+          
+          // Interaction
+          onNodeClick={handleNodeClick}
+          enableNodeDrag={false} // Disable drag to prioritize click accuracy
+          
+          // Rendering
+          nodeCanvasObject={paintNode}
+          nodePointerAreaPaint={paintNodePointerArea}
+          
+          // Links
+          linkColor={(link) => strengthColor[(link as GraphLink).strength] ?? "#52525b"}
+          linkWidth={(link) => {
+             const s = (link as GraphLink).strength;
+             return s === "strong" ? 3 : s === "ok" ? 2 : 1;
           }}
-          onNodeClick={(node) => onNodeSelect?.((node as GraphNode).id)}
-          enableNodeDrag={false}
-          onNodeHover={(node) => {
-             // Force cursor update directly on the canvas element if possible, 
-             // or fall back to body. Using the container ref would be cleaner but body works globally.
-             if (containerRef.current) {
-                containerRef.current.style.cursor = node ? "pointer" : "default";
-             }
-          }}
-          // Increased hit area again, ensuring it matches coordinate system
-          nodePointerAreaPaint={(node: NodeObject, color: string, ctx) => {
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(node.x ?? 0, node.y ?? 0, 20, 0, 2 * Math.PI, false);
-            ctx.fill();
-          }}
-          linkColor={(link: LinkObject) =>
-            strengthColor[(link as GraphLink).strength] ?? "#475569"
-          }
-          linkWidth={(link: LinkObject) =>
-            (link as GraphLink).strength === "strong"
-              ? 2.5
-              : (link as GraphLink).strength === "ok"
-                ? 1.75
-                : 1.2
-          }
-          backgroundColor="#0f1118"
-          linkDirectionalParticles={0}
+          
+          // Physics
           cooldownTicks={100}
+          d3AlphaDecay={0.02}
+          d3VelocityDecay={0.3}
+          
+          // Global
+          backgroundColor="#09090b"
         />
       )}
     </div>
