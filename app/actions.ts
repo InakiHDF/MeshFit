@@ -55,7 +55,7 @@ async function getAuthenticatedClient() {
 export async function signUp(formData: FormData) {
   const username = formData.get('username') as string;
   const password = formData.get('password') as string;
-  const email = `${username}@meshfit.local`;
+  const email = `${username}@meshfit.com`;
 
   const client = createServerSupabaseClient();
   const { data, error } = await client.auth.signUp({
@@ -80,7 +80,7 @@ export async function signUp(formData: FormData) {
 export async function signIn(formData: FormData) {
   const username = formData.get('username') as string;
   const password = formData.get('password') as string;
-  const email = `${username}@meshfit.local`;
+  const email = `${username}@meshfit.com`;
 
   const client = createServerSupabaseClient();
   const { data, error } = await client.auth.signInWithPassword({
