@@ -1,37 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { AddItemForm } from '@/components/AddItemForm';
 import { ItemCard } from '@/components/ItemCard';
-
-// Mock Data
-const MOCK_ITEMS = [
-  {
-    id: '1',
-    name: 'Black Leather Jacket',
-    category: 'Outerwear',
-    image_url: 'https://images.unsplash.com/photo-1551028919-38f42243f859?auto=format&fit=crop&q=80&w=600',
-    attributes: { color: 'Black', material: 'Leather', formality: 60, warmth: 80 }
-  },
-  {
-    id: '2',
-    name: 'White T-Shirt',
-    category: 'Top',
-    image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=600',
-    attributes: { color: 'White', material: 'Cotton', fit: 'Regular', formality: 10, warmth: 20 }
-  },
-  {
-    id: '3',
-    name: 'Blue Jeans',
-    category: 'Bottom',
-    image_url: 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?auto=format&fit=crop&q=80&w=600',
-    attributes: { color: 'Blue', material: 'Denim', fit: 'Slim', formality: 30, warmth: 40 }
-  }
-];
+import { getGraphData } from '@/app/actions';
 
 export default function WardrobePage() {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [items, setItems] = useState<any[]>([]);
+
+  const fetchItems = async () => {
+    const { items } = await getGraphData();
+    if (items) {
+      // Transform for display if needed, but our schema matches mostly
+      setItems(items.map(i => ({
+        ...i,
+        category: i.categories?.type || 'Unknown', // Map joined category
+        attributes: i.attributes || {}
+      })));
+    }
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -51,14 +44,23 @@ export default function WardrobePage() {
 
       {showAddForm && (
         <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-          <AddItemForm />
+          <AddItemForm onSuccess={() => {
+            setShowAddForm(false);
+            fetchItems();
+          }} />
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-        {MOCK_ITEMS.map((item) => (
-          <ItemCard key={item.id} item={item} />
-        ))}
+        {items.length === 0 ? (
+          <div className="col-span-full py-12 text-center text-neutral-500">
+            No items yet. Add some to get started!
+          </div>
+        ) : (
+          items.map((item) => (
+            <ItemCard key={item.id} item={item} />
+          ))
+        )}
       </div>
     </div>
   );

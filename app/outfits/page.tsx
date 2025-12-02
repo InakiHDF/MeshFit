@@ -1,27 +1,25 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { OutfitCard } from '@/components/OutfitCard';
-
-// Mock Outfits generated from the graph
-const MOCK_OUTFITS = [
-  {
-    id: '1',
-    items: [
-      { id: '1', name: 'Leather Jacket', category: 'Outerwear', image_url: 'https://images.unsplash.com/photo-1551028919-38f42243f859?auto=format&fit=crop&q=80&w=600' },
-      { id: '2', name: 'White Tee', category: 'Top', image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=600' },
-      { id: '3', name: 'Blue Jeans', category: 'Bottom', image_url: 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?auto=format&fit=crop&q=80&w=600' },
-    ]
-  },
-  {
-    id: '2',
-    items: [
-      { id: '2', name: 'White Tee', category: 'Top', image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=600' },
-      { id: '3', name: 'Blue Jeans', category: 'Bottom', image_url: 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?auto=format&fit=crop&q=80&w=600' },
-    ]
-  }
-];
+import { generateOutfits } from '@/app/actions';
 
 export default function OutfitsPage() {
+  const [outfits, setOutfits] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOutfits = async () => {
+      const data = await generateOutfits();
+      if (data) {
+        setOutfits(data);
+      }
+      setLoading(false);
+    };
+
+    fetchOutfits();
+  }, []);
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -31,11 +29,19 @@ export default function OutfitsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {MOCK_OUTFITS.map((outfit) => (
-          <OutfitCard key={outfit.id} outfit={outfit} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="py-12 text-center text-neutral-500">Generating outfits...</div>
+      ) : outfits.length === 0 ? (
+        <div className="py-12 text-center text-neutral-500">
+          No complete outfits found. Try connecting a Top, Bottom, and Footwear!
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {outfits.map((outfit) => (
+            <OutfitCard key={outfit.id} outfit={outfit} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Upload, X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { uploadItem } from '@/app/actions';
 
 const CATEGORIES = [
   { id: 'top', label: 'Top' },
@@ -16,7 +17,7 @@ const COLORS = ['Black', 'White', 'Grey', 'Navy', 'Beige', 'Brown', 'Red', 'Blue
 const MATERIALS = ['Cotton', 'Wool', 'Denim', 'Leather', 'Polyester', 'Linen', 'Silk', 'Synthetic', 'Canvas', 'Suede'];
 const FITS = ['Slim', 'Regular', 'Oversized', 'Skinny', 'Loose', 'Tapered', 'Boxy'];
 
-export function AddItemForm() {
+export function AddItemForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -27,11 +28,13 @@ export function AddItemForm() {
     formality: 50,
     warmth: 50,
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -43,25 +46,39 @@ export function AddItemForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // TODO: Implement Supabase submission
-    console.log('Submitting:', { ...formData, image: imagePreview });
 
-    // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('category', formData.category);
+    data.append('color', formData.color);
+    data.append('material', formData.material);
+    data.append('fit', formData.fit);
+    data.append('formality', String(formData.formality));
+    data.append('warmth', String(formData.warmth));
+    if (imageFile) {
+      data.append('image', imageFile);
+    }
 
-    alert('Item added! (Simulation)');
+    const res = await uploadItem(data);
+
+    if (res.error) {
+      alert(res.error);
+    } else {
+      // Reset form
+      setFormData({
+        name: '',
+        category: 'top',
+        color: 'Black',
+        material: 'Cotton',
+        fit: 'Regular',
+        formality: 50,
+        warmth: 50,
+      });
+      setImagePreview(null);
+      setImageFile(null);
+      onSuccess();
+    }
     setLoading(false);
-    // Reset form
-    setFormData({
-      name: '',
-      category: 'top',
-      color: 'Black',
-      material: 'Cotton',
-      fit: 'Regular',
-      formality: 50,
-      warmth: 50,
-    });
-    setImagePreview(null);
   };
 
   return (
@@ -111,6 +128,7 @@ export function AddItemForm() {
                 onClick={(e) => {
                   e.stopPropagation();
                   setImagePreview(null);
+                  setImageFile(null);
                 }}
                 className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white hover:bg-red-500/80"
               >

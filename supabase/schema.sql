@@ -1,46 +1,45 @@
--- Create Categories Table
-CREATE TABLE categories (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('top', 'bottom', 'footwear', 'accessory', 'outerwear')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
+-- Enable RLS
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE connections ENABLE ROW LEVEL SECURITY;
 
--- Create Items Table
-CREATE TABLE items (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  image_url TEXT,
-  category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-  attributes JSONB DEFAULT '{}'::jsonb, -- Stores color, material, fit, formality, warmth
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
+-- Categories are public read-only for now (or shared)
+-- But for this app, let's make them public read, admin write.
+-- Since we don't have an admin role setup, we'll just let anyone read.
+CREATE POLICY "Categories are viewable by everyone" ON categories
+  FOR SELECT USING (true);
 
--- Create Connections Table (Undirected Graph Edges)
--- We enforce item_id_a < item_id_b to avoid duplicate edges (A-B and B-A)
-CREATE TABLE connections (
-  item_id_a UUID REFERENCES items(id) ON DELETE CASCADE,
-  item_id_b UUID REFERENCES items(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  PRIMARY KEY (item_id_a, item_id_b),
-  CONSTRAINT check_order CHECK (item_id_a < item_id_b)
-);
+-- Items Table Updates
+ALTER TABLE items ADD COLUMN user_id UUID REFERENCES auth.users(id) NOT NULL DEFAULT auth.uid();
 
--- Indexes for performance
-CREATE INDEX idx_items_category ON items(category_id);
-CREATE INDEX idx_connections_a ON connections(item_id_a);
-CREATE INDEX idx_connections_b ON connections(item_id_b);
+CREATE POLICY "Users can view their own items" ON items
+  FOR SELECT USING (auth.uid() = user_id);
 
--- Seed Categories
-INSERT INTO categories (name, type) VALUES
-('T-Shirt', 'top'),
-('Shirt', 'top'),
-('Sweater', 'top'),
-('Jeans', 'bottom'),
-('Trousers', 'bottom'),
-('Shorts', 'bottom'),
-('Sneakers', 'footwear'),
-('Boots', 'footwear'),
-('Jacket', 'outerwear'),
-('Coat', 'outerwear'),
-('Hat', 'accessory');
+CREATE POLICY "Users can insert their own items" ON items
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own items" ON items
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own items" ON items
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Connections Table Updates
+ALTER TABLE connections ADD COLUMN user_id UUID REFERENCES auth.users(id) NOT NULL DEFAULT auth.uid();
+
+CREATE POLICY "Users can view their own connections" ON connections
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own connections" ON connections
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own connections" ON connections
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Storage Bucket for Item Images
+-- Note: You need to create a bucket named 'item-images' in Supabase Storage manually or via API.
+-- Policy for Storage
+-- CREATE POLICY "Give users access to own folder 1ro140_0" ON storage.objects
+--   FOR SELECT TO public USING (bucket_id = 'item-images' AND (storage.foldername(name))[1] = auth.uid()::text);
+-- CREATE POLICY "Give users access to own folder 1ro140_1" ON storage.objects
+--   FOR INSERT TO public WITH CHECK (bucket_id = 'item-images' AND (storage.foldername(name))[1] = auth.uid()::text);

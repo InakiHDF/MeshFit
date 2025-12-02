@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -16,6 +16,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { clsx } from 'clsx';
+import { createConnection } from '@/app/actions';
 
 // Custom Node Component
 const ItemNode = ({ data, selected }: { data: { label: string; image?: string; category: string }, selected: boolean }) => {
@@ -26,7 +27,7 @@ const ItemNode = ({ data, selected }: { data: { label: string; image?: string; c
         selected ? "border-blue-500 scale-110 shadow-blue-500/50" : "border-white/20 hover:scale-105 hover:border-white/40"
       )}
     >
-      {/* Handles are needed for ReactFlow edges to work, but we hide them or make them non-interactive for dragging if we want pure click-to-connect. 
+      {/* Handles are needed for ReactFlow edges to work, but we hide them or make them non-interactive for dragging if we want pure click-to-connect.
           For now, we keep them but rely on programmatic edge creation. */}
       <Handle type="target" position={Position.Top} className="opacity-0" />
 
@@ -49,36 +50,24 @@ const nodeTypes = {
   item: ItemNode,
 };
 
-const INITIAL_NODES: Node[] = [
-  {
-    id: '1',
-    type: 'item',
-    position: { x: 250, y: 50 },
-    data: { label: 'Leather Jacket', category: 'Outerwear', image: 'https://images.unsplash.com/photo-1551028919-38f42243f859?auto=format&fit=crop&q=80&w=600' },
-  },
-  {
-    id: '2',
-    type: 'item',
-    position: { x: 100, y: 250 },
-    data: { label: 'White Tee', category: 'Top', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=600' },
-  },
-  {
-    id: '3',
-    type: 'item',
-    position: { x: 400, y: 250 },
-    data: { label: 'Blue Jeans', category: 'Bottom', image: 'https://images.unsplash.com/photo-1542272454315-4c01d7abdf4a?auto=format&fit=crop&q=80&w=600' },
-  },
-];
+interface GraphEditorProps {
+  initialNodes: Node[];
+  initialEdges: Edge[];
+}
 
-const INITIAL_EDGES: Edge[] = [];
-
-export function GraphEditor() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
+export function GraphEditor({ initialNodes, initialEdges }: GraphEditorProps) {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
+  // Update state when props change (e.g. after fetch)
+  useEffect(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
+
   const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node) => {
+    async (_: React.MouseEvent, node: Node) => {
       if (!selectedNodeId) {
         // Select the first node
         setSelectedNodeId(node.id);
@@ -94,26 +83,38 @@ export function GraphEditor() {
         setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
       } else {
         // Create connection
-        const newEdge: Edge = {
-          id: `e${selectedNodeId}-${node.id}`,
-          source: selectedNodeId,
-          target: node.id,
-          animated: true,
-          style: { stroke: '#3b82f6', strokeWidth: 3 },
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            color: '#3b82f6',
-          },
-        };
+        // Check if edge already exists (undirected check)
+        const exists = edges.some(
+          (e) =>
+            (e.source === selectedNodeId && e.target === node.id) ||
+            (e.source === node.id && e.target === selectedNodeId)
+        );
 
-        setEdges((eds) => addEdge(newEdge, eds));
+        if (!exists) {
+          // Optimistic UI Update
+          const newEdge: Edge = {
+            id: `e${selectedNodeId}-${node.id}`,
+            source: selectedNodeId,
+            target: node.id,
+            animated: true,
+            style: { stroke: '#3b82f6', strokeWidth: 3 },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: '#3b82f6',
+            },
+          };
+          setEdges((eds) => addEdge(newEdge, eds));
+
+          // Persist to DB
+          await createConnection(selectedNodeId, node.id);
+        }
 
         // Reset selection
         setSelectedNodeId(null);
         setNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
       }
     },
-    [selectedNodeId, setNodes, setEdges]
+    [selectedNodeId, setNodes, setEdges, edges]
   );
 
   const onPaneClick = useCallback(() => {
