@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutGrid, Network, Shirt } from 'lucide-react';
+import { LayoutGrid, Network, Shirt, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
+import { signOut } from '@/app/actions';
 
 const navItems = [
   { name: 'Wardrobe', href: '/', icon: Shirt },
@@ -13,6 +14,9 @@ const navItems = [
 
 export function Navbar() {
   const pathname = usePathname();
+
+  // Don't show navbar on login page
+  if (pathname === '/login') return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/80 backdrop-blur-lg md:top-0 md:bottom-auto md:border-b md:border-t-0">
@@ -40,6 +44,14 @@ export function Navbar() {
               </Link>
             );
           })}
+
+          <button
+            onClick={() => signOut()}
+            className="flex flex-col items-center justify-center gap-1 rounded-lg px-4 py-2 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10 md:flex-row md:text-sm"
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Exit</span>
+          </button>
         </div>
       </div>
     </nav>
